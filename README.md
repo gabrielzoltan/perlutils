@@ -1,2 +1,2 @@
 # perlutils
-Miscellaneous PERL utils
+Miscellaneous Perl utils
