@@ -18,6 +18,7 @@ sub generateCards {
     $cards[$i][0] = "Major Arcana";
     $cards[$i][1] = @majorIdxs[$i];
     $cards[$i][2] = @majors[$i];
+    $cards[$i][3] = "";
   }
 
   for my $i (0 .. $#suites) {
@@ -26,6 +27,7 @@ sub generateCards {
       $cards[$cardIdx][0] = "Minor Arcana";
       $cards[$cardIdx][1] = @suites[$i];
       $cards[$cardIdx][2] = @minors[$j];
+      $cards[$cardIdx][3] = "";
     }
   }
   return @cards;
@@ -34,10 +36,10 @@ sub generateCards {
 sub printCard {
   my ($card) = $_[0];
   if (@$card[0] eq "Major Arcana") {
-    return @$card[1] . " " . @$card[2];
+    return @$card[1] . " " . @$card[2] . @$card[3];
   }
   if (@$card[0] eq "Minor Arcana") {
-    return @$card[2] . " of " . @$card[1];
+    return @$card[2] . " of " . @$card[1] . @$card[3];
   }
   return "Unknown card";
 }
@@ -48,6 +50,20 @@ sub shuffleCards {
     @$cards = shuffle @$cards;
   }
   return @$cards;
+}
+
+sub reverseCards {
+  my ($seed, $ratio, $cards) = @_;
+  my @cards = @{$cards};
+  srand($seed);
+  for my $i (0 .. $#cards) {
+    my $card = @cards[$i];
+    my $doReverse = int(rand(100)) + 1;
+    if ($doReverse <= $ratio) {
+      @$card[3] = " Rx";
+    }
+  }
+  return @cards;
 }
 
 sub createSeed {
@@ -72,18 +88,24 @@ sub drawCards {
 }
 
 my %options=();
-getopts('q:n:', \%options);
+getopts('q:n:r:', \%options);
 print "Util for drawing tarot cards.\n";
-print "Usage: tarot.pl -q <question> -n <number of cards>\n";
+print "Usage: tarot.pl -q <question> -n <number of cards> -r <percentage of reversed cards>\n";
 if ($options{n} eq "") {
   $options{n} = 3;
 }
-print "\nYour query: " . $options{q} . "\n";
-
 my $seed = createSeed($options{q});
+if ($options{r} eq "") {
+  srand($seed);
+  $options{r} = int(rand(101));
+}
+print "\nReversed card percentage: " . $options{r} . "\n";
+print "Your query: " . $options{q} . "\n";
+
 my @cards = generateCards(\@majors, \@suites, \@minors);
 print "Shuffling deck " . ($seed % 10 + 1) . " times.\n";
 my @cards = shuffleCards($seed % 10 + 1, \@cards);
+my @cards = reverseCards($seed, $options{r}, \@cards);
 #foreach my $i (0 .. $#cards) {
 #  my $card = @cards[$i];
 #  print $i . " " . printCard(\@$card) . "\n";
